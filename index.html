@@ -433,6 +433,8 @@
             updateCounter();
 
             // ======= EYES CONTROL =======
+            let step = 0; // 0 - waiting for wish, 1 - wish ready
+            let scanCooldown = false;
             let blinkInterval = null;
 
             function setEyes(state) {
@@ -507,10 +509,9 @@
                 } catch (e) {}
             }
 
-            // ======= RITUAL LOGIC (как в Шаре) =======
-            const WISH_FLAG = 'tsarevna_wish_ready';
-
+            // ======= STATE FUNCTIONS =======
             function setWaitingForWish() {
+                step = 0;
                 setEyes('closed');
                 startBlinking();
                 answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
@@ -519,6 +520,7 @@
             }
 
             function setWishReady() {
+                step = 1;
                 setEyes('open');
                 stopBlinking();
                 answerElement.textContent = 'Загадывай желание';
@@ -556,21 +558,42 @@
                 triggerKrutishka();
                 playMagicSound();
 
-                // Возврат в ожидание через 8 секунд (как в Шаре)
+                // После ответа через 8 секунд всё возвращается в начало
                 setTimeout(() => {
                     setWaitingForWish();
                 }, 8000);
             }
 
-            // Определяем состояние при загрузке страницы
-            const wishReady = localStorage.getItem(WISH_FLAG);
-            if (wishReady === '1') {
-                // Второе касание — отдаём пророчество и сбрасываем флаг
-                localStorage.removeItem(WISH_FLAG);
-                deliverProphecy();
+            // ======= HASH HANDLER (основная магия) =======
+            function handleHashChange() {
+                if (window.location.hash === '#scan') {
+                    // Убираем хеш, чтобы URL снова стал чистым
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                    
+                    if (scanCooldown) return;
+                    scanCooldown = true;
+
+                    if (step === 0) {
+                        setWishReady();
+                    } else {
+                        deliverProphecy();
+                    }
+
+                    setTimeout(() => { scanCooldown = false; }, 2500);
+                }
+            }
+
+            window.addEventListener('hashchange', handleHashChange);
+
+            // ======= СТАРТ ПРИ ЗАГРУЗКЕ =======
+            // Если страница открыта с #scan (первое касание или последующие),
+            // сразу убираем хеш и переходим к первому шагу (открыть глаза).
+            if (window.location.hash === '#scan') {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+                // Первое касание всегда переводит в режим "Загадывай желание"
+                setWishReady();
             } else {
-                // Первое касание — показываем приглашение и ставим флаг
-                localStorage.setItem(WISH_FLAG, '1');
+                // Обычный вход (по прямой ссылке) — просто ждём
                 setWaitingForWish();
             }
         })();
