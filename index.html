@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>-= ЦАРЕВНА-ОРАКУЛ =-</title>
     <style>
-        /* ---------- ЛОКАЛЬНЫЙ ШРИФТ ---------- */
+        /* ЛОКАЛЬНЫЙ ШРИФТ */
         @font-face {
             font-family: 'Volshebstvo';
             src: url('TDVolshebstvo.otf') format('opentype');
@@ -13,21 +13,11 @@
             font-style: normal;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%; height: 100vh; overflow: hidden;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         }
 
         body {
@@ -44,20 +34,13 @@
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 35% 25%, #0a0a24 0%, #04001a 90%);
             z-index: -3;
         }
 
         .nebula-one {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 20% 30%, rgba(120, 100, 180, 0.08) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(180, 160, 210, 0.06) 0%, transparent 50%);
             z-index: -2;
@@ -65,11 +48,7 @@
         }
 
         .nebula-two {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; bottom: 0; right: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 70% 20%, rgba(160, 140, 200, 0.05) 0%, transparent 55%),
                 radial-gradient(circle at 30% 80%, rgba(100, 80, 160, 0.04) 0%, transparent 55%);
             z-index: -2;
@@ -82,13 +61,8 @@
         }
 
         .stars-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; overflow: hidden;
         }
 
         .star {
@@ -100,27 +74,15 @@
             box-shadow: 0 0 10px #b8b0d0;
         }
 
-        .star:nth-child(3n) {
-            background: #ffe8c0;
-            box-shadow: 0 0 12px #ffd080;
-        }
-
-        .star:nth-child(5n) {
-            background: #c0d8ff;
-            box-shadow: 0 0 12px #a0c0ff;
-        }
-
-        .star:nth-child(7n) {
-            background: #ffffff;
-            box-shadow: 0 0 14px #ffffff;
-        }
+        .star:nth-child(3n) { background: #ffe8c0; box-shadow: 0 0 12px #ffd080; }
+        .star:nth-child(5n) { background: #c0d8ff; box-shadow: 0 0 12px #a0c0ff; }
+        .star:nth-child(7n) { background: #ffffff; box-shadow: 0 0 14px #ffffff; }
 
         @keyframes starTwinkle {
             0%, 100% { opacity: 0.1; transform: scale(0.6); }
             50% { opacity: 1; transform: scale(1); }
         }
 
-        /* ----- ЗАГОЛОВОК ----- */
         .main-title {
             font-family: 'Volshebstvo', 'Times New Roman', serif;
             font-weight: 400;
@@ -144,11 +106,7 @@
         }
 
         @media (max-width: 400px) {
-            .main-title {
-                font-size: 36px;
-                letter-spacing: 2px;
-                word-spacing: 3px;
-            }
+            .main-title { font-size: 36px; letter-spacing: 2px; word-spacing: 3px; }
         }
 
         .princess-mirror {
@@ -163,7 +121,6 @@
             justify-content: space-evenly;
         }
 
-        /* Овальная рамка */
         .mirror-frame {
             position: relative;
             width: 85%;
@@ -186,10 +143,7 @@
         .mirror-frame::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-image: radial-gradient(circle at 20% 30%, rgba(230, 220, 255, 0.35) 1px, transparent 1px),
                 radial-gradient(circle at 80% 60%, rgba(210, 200, 240, 0.3) 1px, transparent 1px),
                 radial-gradient(circle at 40% 80%, rgba(190, 180, 220, 0.25) 1px, transparent 1px);
@@ -208,10 +162,8 @@
         .mirror-frame::after {
             content: '';
             position: absolute;
-            top: -5%;
-            left: -10%;
-            width: 50%;
-            height: 30%;
+            top: -5%; left: -10%;
+            width: 50%; height: 30%;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
             border-radius: 50%;
             transform: rotate(-15deg);
@@ -226,8 +178,7 @@
 
         .princess-face {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -237,8 +188,7 @@
 
         .princess-face img {
             position: absolute;
-            max-width: 98%;
-            max-height: 98%;
+            max-width: 98%; max-height: 98%;
             object-fit: contain;
             transition: opacity 0.18s ease;
             border-radius: inherit;
@@ -255,7 +205,6 @@
         }
         .spin { animation: krutishka 0.8s ease-in-out; }
 
-        /* Экран ответа */
         .mirror-answer {
             background: rgba(5, 3, 20, 0.7);
             backdrop-filter: blur(6px);
@@ -320,12 +269,7 @@
             width: 100%;
         }
 
-        .steps-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-        }
+        .steps-column { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 
         .step-row {
             color: #d8d0e8;
@@ -340,11 +284,7 @@
             opacity: 0.85;
         }
 
-        .step-bullet {
-            font-size: 12px;
-            color: #b8a8d0;
-            text-shadow: 0 0 8px #a098c0;
-        }
+        .step-bullet { font-size: 12px; color: #b8a8d0; text-shadow: 0 0 8px #a098c0; }
 
         .portal-status {
             color: #c8bce0;
@@ -368,9 +308,7 @@
             opacity: 0.8;
         }
 
-        .flash-answer {
-            animation: crystalAnswer 0.7s ease-out;
-        }
+        .flash-answer { animation: crystalAnswer 0.7s ease-out; }
 
         @keyframes crystalAnswer {
             0% { text-shadow: 0 0 8px #ffffff; }
@@ -405,18 +343,9 @@
 
         <div class="ritual-panel">
             <div class="steps-column">
-                <div class="step-row">
-                    <span class="step-bullet">•</span>
-                    <span>ЗАГАДАЙ ЖЕЛАНИЕ</span>
-                </div>
-                <div class="step-row">
-                    <span class="step-bullet">•</span>
-                    <span>ВСТРЕТЬСЯ ВЗГЛЯДОМ</span>
-                </div>
-                <div class="step-row">
-                    <span class="step-bullet">•</span>
-                    <span>ПРИЛОЖИ ТАЛИСМАН</span>
-                </div>
+                <div class="step-row"><span class="step-bullet">•</span><span>ЗАГАДАЙ ЖЕЛАНИЕ</span></div>
+                <div class="step-row"><span class="step-bullet">•</span><span>ВСТРЕТЬСЯ ВЗГЛЯДОМ</span></div>
+                <div class="step-row"><span class="step-bullet">•</span><span>ПРИЛОЖИ ТАЛИСМАН</span></div>
             </div>
         </div>
 
@@ -431,7 +360,6 @@
         (function() {
             "use strict";
 
-            // Генерация звёзд
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -449,7 +377,6 @@
             }
             generateStars();
 
-            // Ответы
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -505,7 +432,7 @@
             }
             updateCounter();
 
-            let step = 0; // 0 — ждём загадывания, 1 — загадано
+            let step = 0;
             let scanCooldown = false;
             let blinkInterval;
 
@@ -529,10 +456,7 @@
             }
 
             function stopBlinking() {
-                if (blinkInterval) {
-                    clearInterval(blinkInterval);
-                    blinkInterval = null;
-                }
+                if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
                 imgOpen.style.opacity = '0';
                 imgClosed.style.opacity = '1';
             }
@@ -555,7 +479,6 @@
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const now = audioCtx.currentTime;
-
                     const osc1 = audioCtx.createOscillator();
                     const gain1 = audioCtx.createGain();
                     osc1.type = 'sine';
@@ -585,7 +508,6 @@
             function deliverProphecy() {
                 revelationCount++;
                 updateCounter();
-
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
                 answerElement.classList.remove('positive', 'neutral', 'negative');
                 if (positiveSet.has(prophecy)) {
@@ -595,7 +517,6 @@
                 } else {
                     answerElement.classList.add('negative');
                 }
-
                 answerElement.style.opacity = '0.2';
                 setTimeout(() => {
                     answerElement.textContent = prophecy;
@@ -603,7 +524,6 @@
                     answerElement.classList.add('flash-answer');
                     setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
                 }, 70);
-
                 if (window.navigator && window.navigator.vibrate) {
                     window.navigator.vibrate(35);
                 }
@@ -642,7 +562,7 @@
                 setTimeout(() => { scanCooldown = false; }, 2500);
             }
 
-            // ---------- ИСПРАВЛЕННЫЙ NFC-СКАНЕР (ПЕРЕЗАПУСК) ----------
+            // ---------- NFC-СКАНЕР С АВТОПЕРЕЗАПУСКОМ ----------
             let ndefReader = null;
 
             async function startNfcScan() {
@@ -657,23 +577,20 @@
                     portalStatus.textContent = 'Приложите талисман';
                     ndefReader.onreading = () => {
                         onTagScanned();
-                        startNfcScan();          // перезапуск для следующего касания
+                        startNfcScan();          // немедленный перезапуск
                     };
                     ndefReader.onreadingerror = () => {
                         portalStatus.textContent = 'Не распознано...';
-                        startNfcScan();          // даже при ошибке перезапускаем
+                        startNfcScan();
                     };
                 } catch (error) {
                     portalStatus.textContent = 'Царевна задумалась...';
-                    // повтор через 2 секунды
                     setTimeout(startNfcScan, 2000);
                 }
             }
 
-            // Первый запуск сканера при загрузке страницы
             startNfcScan();
             setWaitingForWish();
-
         })();
     </script>
 </body>
