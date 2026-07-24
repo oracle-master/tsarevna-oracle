@@ -359,7 +359,7 @@
         (function() {
             "use strict";
 
-            // Звёзды
+            // Звёздное небо
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -410,7 +410,7 @@
             const imgOpen = document.querySelector('.eyes-open');
             const imgGlasses = document.querySelector('.glasses');
 
-            // Счётчик
+            // Счётчик предсказаний
             let revelationCount = 0;
             try {
                 const saved = localStorage.getItem('crystal_oracle_count');
@@ -441,10 +441,13 @@
                 imgGlasses.style.opacity = (state === 'glasses') ? '1' : '0';
             }
 
-            // Звук колокольчиков
-            function playBells() {
+            // Звук колокольчиков (с разблокировкой аудиоконтекста)
+            async function playBells() {
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') {
+                        await audioCtx.resume();
+                    }
                     const now = audioCtx.currentTime;
                     const notes = [1047, 1319, 1568, 2093]; // C6 E6 G6 C7
                     notes.forEach((freq, i) => {
@@ -478,11 +481,11 @@
                 setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
             }
 
-            // Ритуал
+            // Ключевая логика (на localStorage, как в Шаре)
             const WISH_FLAG = 'tsarevna_wish_ready';
 
             function runRitual() {
-                // Второе касание – магия
+                // Второе касание — сразу магия
                 revelationCount++;
                 updateCounter();
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
@@ -491,11 +494,11 @@
                 else if (neutralSet.has(prophecy)) type = 'neutral';
                 else type = 'negative';
 
-                // Запуск вращения и звука
+                // Запускаем вращение и звук одновременно
                 startSpin();
                 playBells();
 
-                // Через 3 секунды вращение заканчивается – очки и ответ
+                // Через 3 секунды показываем очки и ответ
                 setTimeout(() => {
                     setEyes('glasses');
                     showProphecy(prophecy, type);
@@ -505,29 +508,29 @@
                     }
                 }, 3000);
 
-                // Ещё через 10 секунд – возврат в сон
+                // Через 13 секунд (3+10) возвращаемся в сон и сбрасываем флаг
                 setTimeout(() => {
                     setEyes('closed');
                     answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
                     answerElement.className = '';
                     portalStatus.textContent = 'Царевна ждёт...';
-                    localStorage.removeItem(WISH_FLAG);
                     mirrorFrame.classList.remove('spin');
-                }, 13000); // 3 + 10 = 13 сек
+                    localStorage.removeItem(WISH_FLAG);
+                }, 13000);
             }
 
-            // Определение шага при загрузке
+            // Определяем, на каком шаге мы находимся при загрузке
             const wishReady = localStorage.getItem(WISH_FLAG);
             if (wishReady === '1') {
-                // Второе касание – сразу магия
-                localStorage.removeItem(WISH_FLAG);
+                // Флаг есть — значит, это второе касание, сразу даём предсказание
+                localStorage.removeItem(WISH_FLAG); // удаляем сразу, чтобы избежать повторов
                 runRitual();
             } else {
-                // Первое касание – ждём 3 секунды, открываем глаза
+                // Первое касание: ставим флаг, показываем спящую царевну, через 3 секунды открываем глаза
                 localStorage.setItem(WISH_FLAG, '1');
                 setEyes('closed');
-                portalStatus.textContent = 'Царевна пробуждается...';
                 answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
+                portalStatus.textContent = 'Царевна пробуждается...';
                 setTimeout(() => {
                     setEyes('open');
                     answerElement.textContent = 'Загадывай желание';
