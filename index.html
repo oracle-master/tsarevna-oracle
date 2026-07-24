@@ -202,7 +202,9 @@
             0% { transform: rotateY(0deg); }
             100% { transform: rotateY(360deg); }
         }
-        .spin { animation: krutishka 0.8s ease-in-out; }
+        .spin {
+            animation: krutishka 2.5s ease-in-out;
+        }
 
         .mirror-answer {
             background: rgba(5, 3, 20, 0.7);
@@ -357,7 +359,7 @@
         (function() {
             "use strict";
 
-            // ======= STARS =======
+            // Звёзды
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -375,7 +377,7 @@
             }
             generateStars();
 
-            // ======= ANSWERS =======
+            // База ответов
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -398,7 +400,7 @@
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
 
-            // ======= DOM =======
+            // DOM-элементы
             const answerElement = document.getElementById('answer-text');
             const portalStatus = document.getElementById('portalStatus');
             const counterSpan = document.getElementById('counterDisplay');
@@ -408,7 +410,7 @@
             const imgOpen = document.querySelector('.eyes-open');
             const imgGlasses = document.querySelector('.glasses');
 
-            // ======= COUNTER =======
+            // Счётчик
             let revelationCount = 0;
             try {
                 const saved = localStorage.getItem('crystal_oracle_count');
@@ -432,136 +434,107 @@
             }
             updateCounter();
 
-            // ======= EYES CONTROL =======
-            let blinkInterval = null;
-
+            // Управление глазами
             function setEyes(state) {
                 imgClosed.style.opacity = (state === 'closed') ? '1' : '0';
                 imgOpen.style.opacity = (state === 'open') ? '1' : '0';
                 imgGlasses.style.opacity = (state === 'glasses') ? '1' : '0';
             }
 
-            function startBlinking() {
-                if (blinkInterval) clearInterval(blinkInterval);
-                blinkInterval = setInterval(() => {
-                    if (imgGlasses.style.opacity === '1') return;
-                    imgOpen.style.opacity = '1';
-                    imgClosed.style.opacity = '0';
-                    setTimeout(() => {
-                        imgOpen.style.opacity = '0';
-                        imgClosed.style.opacity = '1';
-                    }, 150);
-                }, 3500);
-            }
-
-            function stopBlinking() {
-                if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
-                imgOpen.style.opacity = '0';
-                imgClosed.style.opacity = '1';
-            }
-
-            function showGlassesTemporarily() {
-                stopBlinking();
-                setEyes('glasses');
-                setTimeout(() => {
-                    setEyes('closed');
-                    startBlinking();
-                }, 2000);
-            }
-
-            // ======= ANIMATIONS =======
-            function triggerKrutishka() {
-                mirrorFrame.classList.remove('spin');
-                void mirrorFrame.offsetWidth;
-                mirrorFrame.classList.add('spin');
-                setTimeout(() => mirrorFrame.classList.remove('spin'), 800);
-            }
-
-            function playMagicSound() {
+            // Звук колокольчиков
+            function playBells() {
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     const now = audioCtx.currentTime;
-                    const osc1 = audioCtx.createOscillator();
-                    const gain1 = audioCtx.createGain();
-                    osc1.type = 'sine';
-                    osc1.frequency.setValueAtTime(1400, now);
-                    osc1.frequency.exponentialRampToValueAtTime(800, now + 0.4);
-                    gain1.gain.setValueAtTime(0.3, now);
-                    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    osc1.connect(gain1);
-                    gain1.connect(audioCtx.destination);
-                    osc1.start(now);
-                    osc1.stop(now + 0.6);
-
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.type = 'triangle';
-                    osc2.frequency.setValueAtTime(1800, now);
-                    osc2.frequency.exponentialRampToValueAtTime(1000, now + 0.5);
-                    gain2.gain.setValueAtTime(0.15, now);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc2.start(now);
-                    osc2.stop(now + 0.7);
+                    const notes = [1047, 1319, 1568, 2093]; // C6 E6 G6 C7
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.2, now + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.15 + 0.4);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.15);
+                        osc.stop(now + i * 0.15 + 0.4);
+                    });
                 } catch (e) {}
             }
 
-            // ======= RITUAL LOGIC (как в Шаре) =======
-            const WISH_FLAG = 'tsarevna_wish_ready';
-
-            function setWaitingForWish() {
-                setEyes('closed');
-                startBlinking();
-                answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                answerElement.classList.remove('positive', 'neutral', 'negative');
-                portalStatus.textContent = 'Царевна ждёт...';
+            // Анимация вращения
+            function startSpin() {
+                mirrorFrame.classList.add('spin');
             }
 
-            function deliverProphecy() {
-                revelationCount++;
-                updateCounter();
-
-                const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
-                answerElement.classList.remove('positive', 'neutral', 'negative');
-                if (positiveSet.has(prophecy)) {
-                    answerElement.classList.add('positive');
-                } else if (neutralSet.has(prophecy)) {
-                    answerElement.classList.add('neutral');
-                } else {
-                    answerElement.classList.add('negative');
-                }
-
-                // Мгновенно показываем ответ с анимацией
-                answerElement.textContent = prophecy;
+            // Показать предсказание
+            function showProphecy(text, type) {
+                answerElement.textContent = text;
+                answerElement.className = '';
+                if (type === 'positive') answerElement.classList.add('positive');
+                else if (type === 'neutral') answerElement.classList.add('neutral');
+                else answerElement.classList.add('negative');
                 answerElement.classList.add('flash-answer');
                 setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
-
-                if (window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(35);
-                }
-
-                showGlassesTemporarily();
-                triggerKrutishka();
-                playMagicSound();
-
-                // Через 8 секунд возвращаемся в исходное состояние
-                setTimeout(() => {
-                    setWaitingForWish();
-                    localStorage.removeItem(WISH_FLAG);
-                }, 8000);
             }
 
-            // Определяем состояние при загрузке страницы
+            // Основной ритуал
+            const WISH_FLAG = 'tsarevna_wish_ready';
+
+            function runRitual() {
+                // Второе касание – запуск магии
+                revelationCount++;
+                updateCounter();
+                const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
+                let type = 'neutral';
+                if (positiveSet.has(prophecy)) type = 'positive';
+                else if (neutralSet.has(prophecy)) type = 'neutral';
+                else type = 'negative';
+
+                // Сразу начинаем вращение и звук
+                startSpin();
+                playBells();
+
+                // Через 2.5 секунды вращение закончится, показываем очки и ответ
+                setTimeout(() => {
+                    setEyes('glasses');
+                    showProphecy(prophecy, type);
+                    portalStatus.textContent = 'Пророчество явлено';
+                    // Вибрация
+                    if (window.navigator && window.navigator.vibrate) {
+                        window.navigator.vibrate(35);
+                    }
+                }, 2500);
+
+                // Ещё через 8 секунд всё сбрасываем
+                setTimeout(() => {
+                    setEyes('closed');
+                    answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
+                    answerElement.className = '';
+                    portalStatus.textContent = 'Царевна ждёт...';
+                    localStorage.removeItem(WISH_FLAG);
+                    mirrorFrame.classList.remove('spin');
+                }, 10500); // 2.5 + 8 = 10.5 сек
+            }
+
+            // Определяем, на каком мы шаге
             const wishReady = localStorage.getItem(WISH_FLAG);
             if (wishReady === '1') {
-                // Второе касание — сразу выдаём предсказание
+                // Это второе касание – сразу магия
                 localStorage.removeItem(WISH_FLAG);
-                deliverProphecy();
+                runRitual();
             } else {
-                // Первое касание — ставим флаг и показываем приглашение
+                // Первое касание – показать спящую, потом открыть глаза
                 localStorage.setItem(WISH_FLAG, '1');
-                setWaitingForWish();
+                setEyes('closed');
+                portalStatus.textContent = 'Царевна пробуждается...';
+                answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
+                // Через 2 секунды открываем глаза
+                setTimeout(() => {
+                    setEyes('open');
+                    answerElement.textContent = 'Загадывай желание';
+                    portalStatus.textContent = 'Царевна слушает...';
+                }, 2000);
             }
         })();
     </script>
