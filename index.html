@@ -314,8 +314,6 @@
             30% { text-shadow: 0 0 40px #e0d0f8, 0 0 70px #c8b8e8, 0 0 15px #ffffff; }
             100% { text-shadow: 0 0 15px #c8b8e8, 0 0 6px #ffffff; }
         }
-
-        .warning-nfc { display: none; }
     </style>
 </head>
 <body>
@@ -476,7 +474,7 @@
             // ======= ANIMATIONS =======
             function triggerKrutishka() {
                 mirrorFrame.classList.remove('spin');
-                void mirrorFrame.offsetWidth; // force reflow
+                void mirrorFrame.offsetWidth;
                 mirrorFrame.classList.add('spin');
                 setTimeout(() => mirrorFrame.classList.remove('spin'), 800);
             }
@@ -560,20 +558,13 @@
                 triggerKrutishka();
                 playMagicSound();
 
-                // return to waiting after 4 seconds
                 setTimeout(() => {
                     setWaitingForWish();
                 }, 4000);
             }
 
-            // ======= TAG SCAN HANDLER =======
-            function onTagScanned(event) {
-                // Process only text records to avoid URL re-opening
-                if (event && event.message && event.message.records) {
-                    const hasText = event.message.records.some(record => record.recordType === 'text');
-                    if (!hasText) return; // ignore non-text (e.g., URL)
-                }
-
+            // ======= TAG SCAN TRIGGER (called on hashchange) =======
+            function onTagScanned() {
                 if (scanCooldown) return;
                 scanCooldown = true;
 
@@ -586,32 +577,26 @@
                 setTimeout(() => { scanCooldown = false; }, 2500);
             }
 
-            // ======= NFC SCANNER =======
-            let ndefReader = null;
-
-            async function startNfcScan() {
-                if (!('NDEFReader' in window)) {
-                    portalStatus.textContent = 'Царевна дремлет';
-                    setWaitingForWish();
-                    return;
-                }
-                try {
-                    ndefReader = new NDEFReader();
-                    await ndefReader.scan();
-                    portalStatus.textContent = 'Приложите талисман';
-                    ndefReader.onreading = onTagScanned;
-                    ndefReader.onreadingerror = () => {
-                        portalStatus.textContent = 'Не распознано...';
-                    };
-                } catch (error) {
-                    portalStatus.textContent = 'Царевна задумалась...';
+            // ======= HASH CHANGE HANDLER (replaces NFC scanner) =======
+            function handleHashChange() {
+                if (window.location.hash === '#scan') {
+                    // Remove the hash immediately to allow the next scan
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                    onTagScanned();
                 }
             }
 
-            // ======= START =======
-            setWaitingForWish();
-            startNfcScan();
+            window.addEventListener('hashchange', handleHashChange);
 
+            // ======= INITIAL SETUP =======
+            // If the page was opened with #scan, just clean the hash and stay in waiting state
+            if (window.location.hash === '#scan') {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+
+            setWaitingForWish();
+            // Status message – all logic works via URL hash, no Web NFC required
+            portalStatus.textContent = 'Царевна ждёт...';
         })();
     </script>
 </body>
