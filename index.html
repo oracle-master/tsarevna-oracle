@@ -433,8 +433,6 @@
             updateCounter();
 
             // ======= EYES CONTROL =======
-            let step = 0; // 0 - waiting for wish, 1 - wish ready
-            let scanCooldown = false;
             let blinkInterval = null;
 
             function setEyes(state) {
@@ -509,23 +507,15 @@
                 } catch (e) {}
             }
 
-            // ======= STATE FUNCTIONS =======
+            // ======= RITUAL LOGIC (как в Шаре) =======
+            const WISH_FLAG = 'tsarevna_wish_ready';
+
             function setWaitingForWish() {
-                step = 0;
                 setEyes('closed');
                 startBlinking();
                 answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
                 answerElement.classList.remove('positive', 'neutral', 'negative');
                 portalStatus.textContent = 'Царевна ждёт...';
-            }
-
-            function setWishReady() {
-                step = 1;
-                setEyes('open');
-                stopBlinking();
-                answerElement.textContent = 'Загадывай желание';
-                answerElement.classList.remove('positive', 'neutral', 'negative');
-                portalStatus.textContent = 'Царевна слушает...';
             }
 
             function deliverProphecy() {
@@ -542,13 +532,10 @@
                     answerElement.classList.add('negative');
                 }
 
-                answerElement.style.opacity = '0.2';
-                setTimeout(() => {
-                    answerElement.textContent = prophecy;
-                    answerElement.style.opacity = '1';
-                    answerElement.classList.add('flash-answer');
-                    setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
-                }, 70);
+                // Мгновенно показываем ответ с анимацией
+                answerElement.textContent = prophecy;
+                answerElement.classList.add('flash-answer');
+                setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
 
                 if (window.navigator && window.navigator.vibrate) {
                     window.navigator.vibrate(35);
@@ -558,42 +545,22 @@
                 triggerKrutishka();
                 playMagicSound();
 
-                // После ответа через 8 секунд всё возвращается в начало
+                // Через 8 секунд возвращаемся в исходное состояние
                 setTimeout(() => {
                     setWaitingForWish();
+                    localStorage.removeItem(WISH_FLAG);
                 }, 8000);
             }
 
-            // ======= HASH HANDLER (основная магия) =======
-            function handleHashChange() {
-                if (window.location.hash === '#scan') {
-                    // Убираем хеш, чтобы URL снова стал чистым
-                    history.replaceState(null, '', window.location.pathname + window.location.search);
-                    
-                    if (scanCooldown) return;
-                    scanCooldown = true;
-
-                    if (step === 0) {
-                        setWishReady();
-                    } else {
-                        deliverProphecy();
-                    }
-
-                    setTimeout(() => { scanCooldown = false; }, 2500);
-                }
-            }
-
-            window.addEventListener('hashchange', handleHashChange);
-
-            // ======= СТАРТ ПРИ ЗАГРУЗКЕ =======
-            // Если страница открыта с #scan (первое касание или последующие),
-            // сразу убираем хеш и переходим к первому шагу (открыть глаза).
-            if (window.location.hash === '#scan') {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
-                // Первое касание всегда переводит в режим "Загадывай желание"
-                setWishReady();
+            // Определяем состояние при загрузке страницы
+            const wishReady = localStorage.getItem(WISH_FLAG);
+            if (wishReady === '1') {
+                // Второе касание — сразу выдаём предсказание
+                localStorage.removeItem(WISH_FLAG);
+                deliverProphecy();
             } else {
-                // Обычный вход (по прямой ссылке) — просто ждём
+                // Первое касание — ставим флаг и показываем приглашение
+                localStorage.setItem(WISH_FLAG, '1');
                 setWaitingForWish();
             }
         })();
