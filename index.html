@@ -359,7 +359,7 @@
         (function() {
             "use strict";
 
-            // Звёздное небо
+            // Звёзды
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -377,7 +377,7 @@
             }
             generateStars();
 
-            // База ответов
+            // Ответы
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -400,7 +400,7 @@
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
 
-            // DOM-элементы
+            // DOM
             const answerElement = document.getElementById('answer-text');
             const portalStatus = document.getElementById('portalStatus');
             const counterSpan = document.getElementById('counterDisplay');
@@ -434,20 +434,18 @@
             }
             updateCounter();
 
-            // Управление глазами
+            // Глаза
             function setEyes(state) {
                 imgClosed.style.opacity = (state === 'closed') ? '1' : '0';
                 imgOpen.style.opacity = (state === 'open') ? '1' : '0';
                 imgGlasses.style.opacity = (state === 'glasses') ? '1' : '0';
             }
 
-            // Звук колокольчиков
+            // Звук
             async function playBells() {
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (audioCtx.state === 'suspended') {
-                        await audioCtx.resume();
-                    }
+                    if (audioCtx.state === 'suspended') await audioCtx.resume();
                     const now = audioCtx.currentTime;
                     const notes = [1047, 1319, 1568, 2093];
                     notes.forEach((freq, i) => {
@@ -481,119 +479,55 @@
                 setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
             }
 
-            // Логика состояний
-            let step = 0; // 0 – спит, ждёт первого касания, 1 – глаза открыты, ждёт второго касания
-            let scanCooldown = false;
-            let ndefReader = null;
+            // Ритуал (на localStorage)
+            const WISH_FLAG = 'tsarevna_wish_ready';
 
-            function onTagScanned() {
-                if (scanCooldown) return;
-                scanCooldown = true;
+            function runRitual() {
+                revelationCount++;
+                updateCounter();
+                const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
+                let type = 'neutral';
+                if (positiveSet.has(prophecy)) type = 'positive';
+                else if (neutralSet.has(prophecy)) type = 'neutral';
+                else type = 'negative';
 
-                if (step === 0) {
-                    // Первое касание: пробуждаем
-                    setEyes('open');
-                    answerElement.textContent = 'Загадывай желание';
-                    portalStatus.textContent = 'Царевна слушает...';
-                    step = 1;
-                } else if (step === 1) {
-                    // Второе касание: магия
-                    revelationCount++;
-                    updateCounter();
-                    const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
-                    let type = 'neutral';
-                    if (positiveSet.has(prophecy)) type = 'positive';
-                    else if (neutralSet.has(prophecy)) type = 'neutral';
-                    else type = 'negative';
+                startSpin();
+                playBells();
 
-                    startSpin();
-                    playBells();
-
-                    setTimeout(() => {
-                        setEyes('glasses');
-                        showProphecy(prophecy, type);
-                        portalStatus.textContent = 'Пророчество явлено';
-                        if (window.navigator && window.navigator.vibrate) {
-                            window.navigator.vibrate(35);
-                        }
-                    }, 3000);
-
-                    setTimeout(() => {
-                        setEyes('closed');
-                        answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                        answerElement.className = '';
-                        portalStatus.textContent = 'Царевна ждёт...';
-                        step = 0;
-                        mirrorFrame.classList.remove('spin');
-                    }, 13000);
-                }
-
-                setTimeout(() => { scanCooldown = false; }, 3000);
-            }
-
-            // Запуск NFC-сканера (вызывается при открытии с #scan)
-            async function startNfcScan() {
-                if (!('NDEFReader' in window)) {
-                    portalStatus.textContent = 'Царевна дремлет';
-                    return;
-                }
-                try {
-                    ndefReader = new NDEFReader();
-                    await ndefReader.scan();
-                    portalStatus.textContent = 'Приложите талисман';
-                    ndefReader.onreading = () => {
-                        onTagScanned();
-                    };
-                    ndefReader.onreadingerror = () => {
-                        portalStatus.textContent = 'Не распознано...';
-                    };
-                } catch (error) {
-                    portalStatus.textContent = 'Царевна задумалась...';
-                }
-            }
-
-            // Обработчик изменения хеша
-            function handleHashChange() {
-                if (window.location.hash === '#scan') {
-                    history.replaceState(null, '', window.location.pathname + window.location.search);
-                    if (!ndefReader) {
-                        startNfcScan();
-                    } else {
-                        // Сканер уже активен, имитируем касание
-                        onTagScanned();
+                setTimeout(() => {
+                    setEyes('glasses');
+                    showProphecy(prophecy, type);
+                    portalStatus.textContent = 'Пророчество явлено';
+                    if (window.navigator && window.navigator.vibrate) {
+                        window.navigator.vibrate(35);
                     }
-                }
+                }, 3000);
+
+                setTimeout(() => {
+                    setEyes('closed');
+                    answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
+                    answerElement.className = '';
+                    portalStatus.textContent = 'Царевна ждёт...';
+                    mirrorFrame.classList.remove('spin');
+                    localStorage.removeItem(WISH_FLAG);
+                }, 13000);
             }
 
-            window.addEventListener('hashchange', handleHashChange);
-
-            // Инициализация при загрузке
-            if (window.location.hash === '#scan') {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
-                // Автозапуск сканера
-                startNfcScan();
-                // Начальное состояние – спит, через 3 секунды откроет глаза, если не было касания
+            // Определение шага
+            const wishReady = localStorage.getItem(WISH_FLAG);
+            if (wishReady === '1') {
+                localStorage.removeItem(WISH_FLAG);
+                runRitual();
+            } else {
+                localStorage.setItem(WISH_FLAG, '1');
                 setEyes('closed');
                 answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
                 portalStatus.textContent = 'Царевна пробуждается...';
                 setTimeout(() => {
-                    if (step === 0) {
-                        setEyes('open');
-                        answerElement.textContent = 'Загадывай желание';
-                        portalStatus.textContent = 'Царевна слушает...';
-                        step = 1;
-                    }
+                    setEyes('open');
+                    answerElement.textContent = 'Загадывай желание';
+                    portalStatus.textContent = 'Царевна слушает...';
                 }, 3000);
-            } else {
-                // Открыли без #scan – показываем спящую царевну, но без NFC (нужно коснуться брелоком с #scan)
-                setEyes('closed');
-                answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                portalStatus.textContent = 'Царевна ждёт...';
-                // Если браузер поддерживает NFC, предложим перейти на #scan автоматически
-                if ('NDEFReader' in window) {
-                    // Мягкий редирект на #scan
-                    window.location.hash = '#scan';
-                }
             }
         })();
     </script>
