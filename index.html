@@ -41,7 +41,7 @@
         .nebula-one {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 20% 30%, rgba(120, 100, 180, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(180, 160, 210, 0.06) 0%, transparent 50%);
+                        radial-gradient(circle at 80% 70%, rgba(180, 160, 210, 0.06) 0%, transparent 50%);
             z-index: -2;
             animation: nebulaMove 50s infinite alternate;
         }
@@ -49,7 +49,7 @@
         .nebula-two {
             position: fixed; bottom: 0; right: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 70% 20%, rgba(160, 140, 200, 0.05) 0%, transparent 55%),
-                radial-gradient(circle at 30% 80%, rgba(100, 80, 160, 0.04) 0%, transparent 55%);
+                        radial-gradient(circle at 30% 80%, rgba(100, 80, 160, 0.04) 0%, transparent 55%);
             z-index: -2;
             animation: nebulaMove 60s infinite alternate-reverse;
         }
@@ -351,7 +351,7 @@
         <div class="portal-status" id="portalStatus">Царевна ждёт...</div>
 
         <div class="counter-text">
-            <span id="counterDisplay">0</span> <span id="counterLabel">предсказаний</span>
+            <span id="counterDisplay">0</span> <span id="counterLabel">предсказания</span>
         </div>
     </div>
 
@@ -359,7 +359,7 @@
         (function() {
             "use strict";
 
-            // ======= ЗВЁЗДЫ =======
+            // ======= STARS =======
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -377,7 +377,7 @@
             }
             generateStars();
 
-            // ======= БАЗА ОТВЕТОВ =======
+            // ======= ANSWERS =======
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -400,7 +400,7 @@
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
 
-            // ======= DOM-ЭЛЕМЕНТЫ =======
+            // ======= DOM ELEMENTS =======
             const answerElement = document.getElementById('answer-text');
             const portalStatus = document.getElementById('portalStatus');
             const counterSpan = document.getElementById('counterDisplay');
@@ -410,7 +410,7 @@
             const imgOpen = document.querySelector('.eyes-open');
             const imgGlasses = document.querySelector('.glasses');
 
-            // ======= СЧЁТЧИК =======
+            // ======= COUNTER =======
             let revelationCount = 0;
             try {
                 const saved = localStorage.getItem('crystal_oracle_count');
@@ -434,8 +434,8 @@
             }
             updateCounter();
 
-            // ======= УПРАВЛЕНИЕ ГЛАЗАМИ =======
-            let step = 0;          // 0 – ожидание, 1 – готовность загадать
+            // ======= EYES CONTROL =======
+            let step = 0; // 0 – waiting for wish, 1 – wish ready
             let scanCooldown = false;
             let blinkInterval = null;
 
@@ -473,10 +473,10 @@
                 }, 2000);
             }
 
-            // ======= АНИМАЦИИ =======
+            // ======= ANIMATIONS =======
             function triggerKrutishka() {
                 mirrorFrame.classList.remove('spin');
-                void mirrorFrame.offsetWidth; // принудительный рефлоу
+                void mirrorFrame.offsetWidth; // force reflow
                 mirrorFrame.classList.add('spin');
                 setTimeout(() => mirrorFrame.classList.remove('spin'), 800);
             }
@@ -511,7 +511,7 @@
                 } catch (e) {}
             }
 
-            // ======= ОСНОВНЫЕ ФУНКЦИИ СОСТОЯНИЙ =======
+            // ======= STATE FUNCTIONS =======
             function setWaitingForWish() {
                 step = 0;
                 setEyes('closed');
@@ -560,27 +560,33 @@
                 triggerKrutishka();
                 playMagicSound();
 
-                // Через 4 секунды возвращаемся в режим ожидания
+                // return to waiting after 4 seconds
                 setTimeout(() => {
                     setWaitingForWish();
                 }, 4000);
             }
 
-            // ======= ОБРАБОТЧИК ПРИКОСНОВЕНИЯ =======
-            function onTagScanned() {
+            // ======= TAG SCAN HANDLER =======
+            function onTagScanned(event) {
+                // Process only text records to avoid URL re-opening
+                if (event && event.message && event.message.records) {
+                    const hasText = event.message.records.some(record => record.recordType === 'text');
+                    if (!hasText) return; // ignore non-text (e.g., URL)
+                }
+
                 if (scanCooldown) return;
                 scanCooldown = true;
 
                 if (step === 0) {
                     setWishReady();
                 } else {
-                    deliverProphecy();   // сброс происходит внутри через таймер
+                    deliverProphecy();
                 }
 
                 setTimeout(() => { scanCooldown = false; }, 2500);
             }
 
-            // ======= NFC-СКАНЕР (ОДИН РАЗ) =======
+            // ======= NFC SCANNER =======
             let ndefReader = null;
 
             async function startNfcScan() {
@@ -602,7 +608,7 @@
                 }
             }
 
-            // ======= СТАРТ =======
+            // ======= START =======
             setWaitingForWish();
             startNfcScan();
 
