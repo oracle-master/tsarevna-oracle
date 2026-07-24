@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>-= ЦАРЕВНА-ОРАКУЛ =-</title>
+    <title>ЦАРЕВНА-ОРАКУЛ</title>
     <style>
-        /* ЛОКАЛЬНЫЙ ШРИФТ */
         @font-face {
             font-family: 'Volshebstvo';
             src: url('TDVolshebstvo.otf') format('opentype');
@@ -360,6 +359,7 @@
         (function() {
             "use strict";
 
+            // ======= ЗВЁЗДЫ =======
             function generateStars() {
                 const layer = document.getElementById('starsLayer');
                 for (let i = 0; i < 180; i++) {
@@ -377,6 +377,7 @@
             }
             generateStars();
 
+            // ======= БАЗА ОТВЕТОВ =======
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -395,11 +396,11 @@
                 "Отступись", "Иллюзия", "Холодный ветер", "Забудь",
                 "Не судьба", "Ответ — нет", "Погасшая искра"
             ];
-
             const positiveSet = new Set(positive);
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
 
+            // ======= DOM-ЭЛЕМЕНТЫ =======
             const answerElement = document.getElementById('answer-text');
             const portalStatus = document.getElementById('portalStatus');
             const counterSpan = document.getElementById('counterDisplay');
@@ -409,6 +410,7 @@
             const imgOpen = document.querySelector('.eyes-open');
             const imgGlasses = document.querySelector('.glasses');
 
+            // ======= СЧЁТЧИК =======
             let revelationCount = 0;
             try {
                 const saved = localStorage.getItem('crystal_oracle_count');
@@ -432,9 +434,10 @@
             }
             updateCounter();
 
-            let step = 0;
+            // ======= УПРАВЛЕНИЕ ГЛАЗАМИ =======
+            let step = 0;          // 0 – ожидание, 1 – готовность загадать
             let scanCooldown = false;
-            let blinkInterval;
+            let blinkInterval = null;
 
             function setEyes(state) {
                 imgClosed.style.opacity = (state === 'closed') ? '1' : '0';
@@ -470,7 +473,10 @@
                 }, 2000);
             }
 
+            // ======= АНИМАЦИИ =======
             function triggerKrutishka() {
+                mirrorFrame.classList.remove('spin');
+                void mirrorFrame.offsetWidth; // принудительный рефлоу
                 mirrorFrame.classList.add('spin');
                 setTimeout(() => mirrorFrame.classList.remove('spin'), 800);
             }
@@ -505,33 +511,7 @@
                 } catch (e) {}
             }
 
-            function deliverProphecy() {
-                revelationCount++;
-                updateCounter();
-                const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
-                answerElement.classList.remove('positive', 'neutral', 'negative');
-                if (positiveSet.has(prophecy)) {
-                    answerElement.classList.add('positive');
-                } else if (neutralSet.has(prophecy)) {
-                    answerElement.classList.add('neutral');
-                } else {
-                    answerElement.classList.add('negative');
-                }
-                answerElement.style.opacity = '0.2';
-                setTimeout(() => {
-                    answerElement.textContent = prophecy;
-                    answerElement.style.opacity = '1';
-                    answerElement.classList.add('flash-answer');
-                    setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
-                }, 70);
-                if (window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(35);
-                }
-                showGlassesTemporarily();
-                triggerKrutishka();
-                playMagicSound();
-            }
-
+            // ======= ОСНОВНЫЕ ФУНКЦИИ СОСТОЯНИЙ =======
             function setWaitingForWish() {
                 step = 0;
                 setEyes('closed');
@@ -550,19 +530,57 @@
                 portalStatus.textContent = 'Царевна слушает...';
             }
 
+            function deliverProphecy() {
+                revelationCount++;
+                updateCounter();
+
+                const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
+                answerElement.classList.remove('positive', 'neutral', 'negative');
+                if (positiveSet.has(prophecy)) {
+                    answerElement.classList.add('positive');
+                } else if (neutralSet.has(prophecy)) {
+                    answerElement.classList.add('neutral');
+                } else {
+                    answerElement.classList.add('negative');
+                }
+
+                answerElement.style.opacity = '0.2';
+                setTimeout(() => {
+                    answerElement.textContent = prophecy;
+                    answerElement.style.opacity = '1';
+                    answerElement.classList.add('flash-answer');
+                    setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
+                }, 70);
+
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(35);
+                }
+
+                showGlassesTemporarily();
+                triggerKrutishka();
+                playMagicSound();
+
+                // Через 4 секунды возвращаемся в режим ожидания
+                setTimeout(() => {
+                    setWaitingForWish();
+                }, 4000);
+            }
+
+            // ======= ОБРАБОТЧИК ПРИКОСНОВЕНИЯ =======
             function onTagScanned() {
                 if (scanCooldown) return;
                 scanCooldown = true;
+
                 if (step === 0) {
                     setWishReady();
                 } else {
-                    deliverProphecy();
-                    setWaitingForWish();
+                    deliverProphecy();   // сброс происходит внутри через таймер
                 }
+
                 setTimeout(() => { scanCooldown = false; }, 2500);
             }
 
-            // ---------- NFC-СКАНЕР С АВТОПЕРЕЗАПУСКОМ ----------
+            // ======= NFC-СКАНЕР (ОДИН РАЗ) =======
             let ndefReader = null;
 
             async function startNfcScan() {
@@ -575,22 +593,19 @@
                     ndefReader = new NDEFReader();
                     await ndefReader.scan();
                     portalStatus.textContent = 'Приложите талисман';
-                    ndefReader.onreading = () => {
-                        onTagScanned();
-                        startNfcScan();          // немедленный перезапуск
-                    };
+                    ndefReader.onreading = onTagScanned;
                     ndefReader.onreadingerror = () => {
                         portalStatus.textContent = 'Не распознано...';
-                        startNfcScan();
                     };
                 } catch (error) {
                     portalStatus.textContent = 'Царевна задумалась...';
-                    setTimeout(startNfcScan, 2000);
                 }
             }
 
-            startNfcScan();
+            // ======= СТАРТ =======
             setWaitingForWish();
+            startNfcScan();
+
         })();
     </script>
 </body>
