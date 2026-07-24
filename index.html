@@ -398,7 +398,7 @@
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
 
-            // ======= DOM ELEMENTS =======
+            // ======= DOM =======
             const answerElement = document.getElementById('answer-text');
             const portalStatus = document.getElementById('portalStatus');
             const counterSpan = document.getElementById('counterDisplay');
@@ -433,8 +433,6 @@
             updateCounter();
 
             // ======= EYES CONTROL =======
-            let step = 0; // 0 – waiting for wish, 1 – wish ready
-            let scanCooldown = false;
             let blinkInterval = null;
 
             function setEyes(state) {
@@ -509,9 +507,10 @@
                 } catch (e) {}
             }
 
-            // ======= STATE FUNCTIONS =======
+            // ======= RITUAL LOGIC (как в Шаре) =======
+            const WISH_FLAG = 'tsarevna_wish_ready';
+
             function setWaitingForWish() {
-                step = 0;
                 setEyes('closed');
                 startBlinking();
                 answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
@@ -520,7 +519,6 @@
             }
 
             function setWishReady() {
-                step = 1;
                 setEyes('open');
                 stopBlinking();
                 answerElement.textContent = 'Загадывай желание';
@@ -558,45 +556,23 @@
                 triggerKrutishka();
                 playMagicSound();
 
+                // Возврат в ожидание через 8 секунд (как в Шаре)
                 setTimeout(() => {
                     setWaitingForWish();
-                }, 4000);
+                }, 8000);
             }
 
-            // ======= TAG SCAN TRIGGER (called on hashchange) =======
-            function onTagScanned() {
-                if (scanCooldown) return;
-                scanCooldown = true;
-
-                if (step === 0) {
-                    setWishReady();
-                } else {
-                    deliverProphecy();
-                }
-
-                setTimeout(() => { scanCooldown = false; }, 2500);
+            // Определяем состояние при загрузке страницы
+            const wishReady = localStorage.getItem(WISH_FLAG);
+            if (wishReady === '1') {
+                // Второе касание — отдаём пророчество и сбрасываем флаг
+                localStorage.removeItem(WISH_FLAG);
+                deliverProphecy();
+            } else {
+                // Первое касание — показываем приглашение и ставим флаг
+                localStorage.setItem(WISH_FLAG, '1');
+                setWaitingForWish();
             }
-
-            // ======= HASH CHANGE HANDLER (replaces NFC scanner) =======
-            function handleHashChange() {
-                if (window.location.hash === '#scan') {
-                    // Remove the hash immediately to allow the next scan
-                    history.replaceState(null, '', window.location.pathname + window.location.search);
-                    onTagScanned();
-                }
-            }
-
-            window.addEventListener('hashchange', handleHashChange);
-
-            // ======= INITIAL SETUP =======
-            // If the page was opened with #scan, just clean the hash and stay in waiting state
-            if (window.location.hash === '#scan') {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
-            }
-
-            setWaitingForWish();
-            // Status message – all logic works via URL hash, no Web NFC required
-            portalStatus.textContent = 'Царевна ждёт...';
         })();
     </script>
 </body>
