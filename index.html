@@ -356,7 +356,6 @@
 
     <script>
         (() => {
-            // Элементы
             const mirrorFrame = document.getElementById('mirrorFrame');
             const answerText = document.getElementById('answer-text');
             const closedEyes = document.querySelector('.eyes-closed');
@@ -366,7 +365,6 @@
             const counterSpan = document.getElementById('counterDisplay');
             const counterLabel = document.getElementById('counterLabel');
 
-            // Ответы
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -389,12 +387,8 @@
             const positiveSet = new Set(positive);
             const neutralSet = new Set(neutral);
 
-            // Счётчик
             let count = 0;
-            try {
-                const saved = localStorage.getItem('crystal_oracle_count');
-                if (saved) count = parseInt(saved, 10) || 0;
-            } catch (e) {}
+            try { const saved = localStorage.getItem('crystal_oracle_count'); if (saved) count = parseInt(saved, 10) || 0; } catch (e) {}
             const updateCounter = () => {
                 counterSpan.textContent = count;
                 const n = count % 10, m = count % 100;
@@ -403,31 +397,31 @@
             };
             updateCounter();
 
-            // Глаза
             const setEyes = (state) => {
                 closedEyes.style.opacity = state === 'closed' ? '1' : '0';
                 openEyes.style.opacity = state === 'open' ? '1' : '0';
                 glasses.style.opacity = state === 'glasses' ? '1' : '0';
             };
 
-            // Звук
+            // Звук запускается с небольшой задержкой, чтобы синхронизироваться с началом вращения
             const playBells = () => {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (ctx.state === 'suspended') ctx.resume();
-                    const now = ctx.currentTime;
-                    [1047, 1319, 1568, 2093].forEach((f, i) => {
-                        const o = ctx.createOscillator(), g = ctx.createGain();
-                        o.type = 'sine'; o.frequency.value = f;
-                        g.gain.setValueAtTime(0.2, now + i * 0.2);
-                        g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.2 + 0.5);
-                        o.connect(g); g.connect(ctx.destination);
-                        o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.5);
-                    });
-                } catch (e) {}
+                setTimeout(() => {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        if (ctx.state === 'suspended') ctx.resume();
+                        const now = ctx.currentTime;
+                        [1047, 1319, 1568, 2093].forEach((f, i) => {
+                            const o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'sine'; o.frequency.value = f;
+                            g.gain.setValueAtTime(0.2, now + i * 0.2);
+                            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.2 + 0.5);
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.5);
+                        });
+                    } catch (e) {}
+                }, 150); // задержка 150 мс, чтобы анимация точно стартанула
             };
 
-            // Анимации
             const spin = () => { mirrorFrame.classList.add('spin'); };
             const showAnswer = (text, type) => {
                 answerText.textContent = text;
@@ -436,8 +430,7 @@
                 setTimeout(() => answerText.classList.remove('flash-answer'), 700);
             };
 
-            // Состояния
-            let step = 'sleep'; // sleep -> awake -> processing -> sleep
+            let step = 'sleep';
             let cooldown = false;
 
             const wake = () => {
@@ -453,7 +446,8 @@
                 count++; updateCounter();
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
                 const type = positiveSet.has(prophecy) ? 'positive' : (neutralSet.has(prophecy) ? 'neutral' : 'negative');
-                spin(); playBells();
+                spin();
+                playBells(); // теперь звук начнётся одновременно с вращением
                 portalStatus.textContent = 'Царевна ищет ответ...';
                 answerText.textContent = '';
                 setTimeout(() => {
@@ -480,7 +474,6 @@
                 setTimeout(() => { cooldown = false; }, 3000);
             };
 
-            // Web NFC
             if ('NDEFReader' in window) {
                 const ndef = new NDEFReader();
                 ndef.scan().then(() => {
@@ -489,7 +482,6 @@
                     setEyes('closed');
                     step = 'sleep';
                     ndef.onreading = ({ message }) => {
-                        // Проверяем, есть ли текстовая запись
                         const hasText = message.records.some(r => r.recordType === 'text');
                         if (hasText) handleTouch();
                     };
@@ -497,14 +489,11 @@
                     answerText.textContent = 'Ошибка NFC. Разрешите доступ.';
                 });
             } else {
-                // Fallback для iOS/ПК
-                answerText.innerHTML = 'Нажмите на зеркало<br>и загадайте желание';
-                portalStatus.textContent = 'Царевна дремлет';
+                answerText.innerHTML = 'Царевна дремлет';
+                portalStatus.textContent = 'NFC не поддерживается';
                 setEyes('closed');
-                mirrorFrame.addEventListener('click', handleTouch);
             }
 
-            // Звёзды
             const starsLayer = document.getElementById('starsLayer');
             for (let i = 0; i < 180; i++) {
                 const star = document.createElement('div');
