@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ЦАРЕВНА-ОРАКУЛ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#04001a">
     <style>
         @font-face {
             font-family: 'Volshebstvo';
@@ -15,8 +17,10 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
-            width: 100%; height: 100vh; overflow: hidden;
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
         }
 
         body {
@@ -24,10 +28,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             font-family: 'Times New Roman', 'Georgia', serif;
             padding: 12px 16px;
-            margin: 0;
+            height: 100dvh;
         }
 
         body::before {
@@ -88,7 +92,7 @@
             font-size: 48px;
             letter-spacing: 4px;
             text-transform: none;
-            margin-bottom: 16px;
+            margin-bottom: 0;
             margin-top: 0;
             background: linear-gradient(135deg,
                     #d0c8e0 0%, #f0e8ff 25%, #c0b8d8 40%, #f8f4ff 55%, #b8aed0 70%, #a098c0 100%);
@@ -100,6 +104,7 @@
             text-align: center;
             line-height: 1.1;
             width: 100%;
+            white-space: nowrap;
         }
 
         @media (max-width: 400px) {
@@ -109,18 +114,19 @@
         .princess-mirror {
             max-width: 360px;
             width: 100%;
-            margin: 0 auto;
+            margin: 8px auto 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             flex: 1;
             min-height: 0;
             justify-content: space-evenly;
+            gap: 0;
         }
 
         .mirror-frame {
             position: relative;
-            width: 85%;
+            width: 70%;
             aspect-ratio: 1 / 1.15;
             background: radial-gradient(ellipse at 50% 45%, rgba(30, 20, 50, 0.6) 0%, rgba(8, 5, 25, 0.85) 90%);
             border-radius: 50% / 40%;
@@ -171,7 +177,7 @@
 
         @keyframes gentleFloat {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-7px); }
+            50% { transform: translateY(-2px); }
         }
 
         .princess-face {
@@ -210,7 +216,7 @@
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             border-radius: 40px;
-            padding: 18px 12px;
+            padding: 10px 12px;
             width: 100%;
             border: 1px solid rgba(200, 190, 220, 0.5);
             box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.7), 0 0 30px rgba(180, 170, 210, 0.5);
@@ -327,9 +333,18 @@
     <div class="princess-mirror">
         <div class="mirror-frame" id="mirrorFrame">
             <div class="princess-face">
-                <img src="https://i.imgur.com/Xobf8jG.png" class="eyes-closed" alt="Царевна слушает">
-                <img src="https://i.imgur.com/CPEQSf9.png" class="eyes-open" alt="Царевна">
-                <img src="https://i.imgur.com/sobpNvm.png" class="glasses" alt="Царевна знает">
+                <img src="images/closed.png"
+                     class="eyes-closed"
+                     alt="Царевна слушает"
+                     loading="eager">
+                <img src="images/open.png"
+                     class="eyes-open"
+                     alt="Царевна"
+                     loading="eager">
+                <img src="images/glasses.png"
+                     class="glasses"
+                     alt="Царевна знает"
+                     loading="eager">
             </div>
         </div>
 
@@ -356,18 +371,6 @@
 
     <script>
         (() => {
-            // Разблокировка аудио при загрузке
-            let audioCtx = null;
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                    document.addEventListener('click', () => {
-                        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-                    }, { once: true });
-                }
-            } catch (e) {}
-
             const mirrorFrame = document.getElementById('mirrorFrame');
             const answerText = document.getElementById('answer-text');
             const closedEyes = document.querySelector('.eyes-closed');
@@ -415,6 +418,16 @@
                 glasses.style.opacity = state === 'glasses' ? '1' : '0';
             };
 
+            let audioCtx = null;
+            const ensureAudio = () => {
+                if (!audioCtx) {
+                    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            };
+
             const playBells = () => {
                 if (!audioCtx) return;
                 try {
@@ -448,6 +461,7 @@
                 setEyes('open');
                 answerText.textContent = 'Загадывай желание';
                 portalStatus.textContent = 'Царевна слушает...';
+                ensureAudio();
             };
             const magic = () => {
                 if (step !== 'awake') return;
@@ -456,6 +470,7 @@
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
                 const type = positiveSet.has(prophecy) ? 'positive' : (neutralSet.has(prophecy) ? 'neutral' : 'negative');
                 spin();
+                ensureAudio();
                 setTimeout(() => playBells(), 150);
                 portalStatus.textContent = 'Царевна ищет ответ...';
                 answerText.textContent = '';
@@ -483,33 +498,42 @@
                 setTimeout(() => { cooldown = false; }, 3000);
             };
 
+            // NFC 2.0
+            let nfcReader = null;
+            let lastTagTime = 0;
+
             async function startNFC() {
                 if (!('NDEFReader' in window)) {
-                    portalStatus.textContent = 'NFC не поддерживается';
-                    setEyes('closed');
+                    portalStatus.textContent = 'Приложите талисман';
                     return;
                 }
                 try {
-                    // Микровибрация для разблокировки контекста (незаметно для пользователя)
-                    if (navigator.vibrate) navigator.vibrate(0);
-                    const ndef = new NDEFReader();
-                    await ndef.scan();
-                    portalStatus.textContent = 'Приложите талисман';
-                    answerText.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                    setEyes('closed');
-                    step = 'sleep';
-                    ndef.onreading = ({ message }) => {
-                        const hasText = message.records.some(r => r.recordType === 'text');
-                        if (hasText) handleTouch();
+                    nfcReader = new NDEFReader();
+                    await nfcReader.scan();
+                    portalStatus.textContent = 'Царевна ждёт талисман...';
+                    nfcReader.onreading = (event) => {
+                        const now = Date.now();
+                        if (now - lastTagTime < 3000) {
+                            return;
+                        }
+                        lastTagTime = now;
+                        ensureAudio();
+                        handleTouch();
+                    };
+                    nfcReader.onerror = () => {
+                        portalStatus.textContent = 'Талисман не услышан...';
                     };
                 } catch (error) {
-                    answerText.textContent = '';
-                    portalStatus.textContent = 'Проверьте настройки NFC';
-                    setEyes('closed');
+                    console.log('NFC error:', error);
+                    portalStatus.textContent = 'Коснись экрана, чтобы разбудить Царевну';
                 }
             }
 
-            startNFC();
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    startNFC();
+                }, 1000);
+            });
 
             const starsLayer = document.getElementById('starsLayer');
             for (let i = 0; i < 180; i++) {
