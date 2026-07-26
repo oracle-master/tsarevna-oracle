@@ -356,6 +356,20 @@
 
     <script>
         (() => {
+            // Разблокируем аудио сразу после загрузки (действие пользователя — касание брелоком для открытия сайта)
+            let audioCtx = null;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    // Пытаемся разбудить контекст
+                    audioCtx.resume();
+                    // Дополнительный резервный способ: создаём пустой звук при первом касании экрана (если NFC не разбудит)
+                    document.addEventListener('click', () => {
+                        if (audioCtx.state === 'suspended') audioCtx.resume();
+                    }, { once: true });
+                }
+            } catch (e) {}
+
             const mirrorFrame = document.getElementById('mirrorFrame');
             const answerText = document.getElementById('answer-text');
             const closedEyes = document.querySelector('.eyes-closed');
@@ -403,23 +417,20 @@
                 glasses.style.opacity = state === 'glasses' ? '1' : '0';
             };
 
-            // Звук запускается с небольшой задержкой, чтобы синхронизироваться с началом вращения
             const playBells = () => {
-                setTimeout(() => {
-                    try {
-                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        if (ctx.state === 'suspended') ctx.resume();
-                        const now = ctx.currentTime;
-                        [1047, 1319, 1568, 2093].forEach((f, i) => {
-                            const o = ctx.createOscillator(), g = ctx.createGain();
-                            o.type = 'sine'; o.frequency.value = f;
-                            g.gain.setValueAtTime(0.2, now + i * 0.2);
-                            g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.2 + 0.5);
-                            o.connect(g); g.connect(ctx.destination);
-                            o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.5);
-                        });
-                    } catch (e) {}
-                }, 150); // задержка 150 мс, чтобы анимация точно стартанула
+                if (!audioCtx) return;
+                try {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const now = audioCtx.currentTime;
+                    [1047, 1319, 1568, 2093].forEach((f, i) => {
+                        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                        o.type = 'sine'; o.frequency.value = f;
+                        g.gain.setValueAtTime(0.2, now + i * 0.2);
+                        g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.2 + 0.5);
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.5);
+                    });
+                } catch (e) {}
             };
 
             const spin = () => { mirrorFrame.classList.add('spin'); };
@@ -447,7 +458,8 @@
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
                 const type = positiveSet.has(prophecy) ? 'positive' : (neutralSet.has(prophecy) ? 'neutral' : 'negative');
                 spin();
-                playBells(); // теперь звук начнётся одновременно с вращением
+                // Запускаем звук одновременно с вращением (с задержкой 150 мс для синхронизации)
+                setTimeout(() => playBells(), 150);
                 portalStatus.textContent = 'Царевна ищет ответ...';
                 answerText.textContent = '';
                 setTimeout(() => {
@@ -486,10 +498,12 @@
                         if (hasText) handleTouch();
                     };
                 }).catch(() => {
-                    answerText.textContent = 'Ошибка NFC. Разрешите доступ.';
+                    answerText.textContent = '';
+                    portalStatus.textContent = 'Разрешите доступ к NFC';
+                    setEyes('closed');
                 });
             } else {
-                answerText.innerHTML = 'Царевна дремлет';
+                answerText.innerHTML = '';
                 portalStatus.textContent = 'NFC не поддерживается';
                 setEyes('closed');
             }
