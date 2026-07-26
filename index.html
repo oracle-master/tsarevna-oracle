@@ -70,12 +70,12 @@
             border-radius: 50%;
             opacity: 0;
             animation: starTwinkle 4s infinite ease-in-out;
-            box-shadow: 0 0 10px #b8b0d0;
+            box-shadow: 0 0 4px #b8b0d0; /* оптимизировано */
         }
 
-        .star:nth-child(3n) { background: #ffe8c0; box-shadow: 0 0 12px #ffd080; }
-        .star:nth-child(5n) { background: #c0d8ff; box-shadow: 0 0 12px #a0c0ff; }
-        .star:nth-child(7n) { background: #ffffff; box-shadow: 0 0 14px #ffffff; }
+        .star:nth-child(3n) { background: #ffe8c0; box-shadow: 0 0 4px #ffd080; }
+        .star:nth-child(5n) { background: #c0d8ff; box-shadow: 0 0 4px #a0c0ff; }
+        .star:nth-child(7n) { background: #ffffff; box-shadow: 0 0 4px #ffffff; }
 
         @keyframes starTwinkle {
             0%, 100% { opacity: 0.1; transform: scale(0.6); }
@@ -95,9 +95,7 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            text-shadow: 0 0 20px rgba(210, 200, 240, 0.7), 0 0 50px rgba(190, 180, 220, 0.5),
-                0 4px 10px rgba(0, 0, 0, 0.6);
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+            filter: drop-shadow(0 0 15px rgba(210, 200, 240, 0.6)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
             word-spacing: 6px;
             text-align: center;
             line-height: 1.1;
@@ -137,6 +135,7 @@
             margin-bottom: 14px;
             animation: gentleFloat 8s infinite ease-in-out;
             overflow: hidden;
+            perspective: 1000px; /* 3D-перспектива */
         }
 
         .mirror-frame::before {
@@ -356,28 +355,18 @@
     </div>
 
     <script>
-        (function() {
-            "use strict";
+        document.addEventListener("DOMContentLoaded", () => {
+            // Элементы
+            const mirrorFrame = document.getElementById('mirrorFrame');
+            const answerText = document.getElementById('answer-text');
+            const closedEyes = document.querySelector('.eyes-closed');
+            const openEyes = document.querySelector('.eyes-open');
+            const glasses = document.querySelector('.glasses');
+            const portalStatus = document.getElementById('portalStatus');
+            const counterSpan = document.getElementById('counterDisplay');
+            const counterLabel = document.getElementById('counterLabel');
 
-            // Звёзды
-            function generateStars() {
-                const layer = document.getElementById('starsLayer');
-                for (let i = 0; i < 180; i++) {
-                    const star = document.createElement('div');
-                    star.className = 'star';
-                    const size = Math.random() * 3.5 + 1;
-                    star.style.width = size + 'px';
-                    star.style.height = size + 'px';
-                    star.style.left = Math.random() * 100 + '%';
-                    star.style.top = Math.random() * 100 + '%';
-                    star.style.animationDelay = Math.random() * 5 + 's';
-                    star.style.animationDuration = (Math.random() * 2.5 + 1.5) + 's';
-                    layer.appendChild(star);
-                }
-            }
-            generateStars();
-
-            // Ответы
+            // База предсказаний
             const positive = [
                 "Быть по-твоему", "Звёзды шепчут: да", "Добрый знак", "Суженое сбудется",
                 "Сама судьба — за", "Удача в кокошнике", "Верь, и придёт", "Знаки добрые",
@@ -399,16 +388,6 @@
             const positiveSet = new Set(positive);
             const neutralSet = new Set(neutral);
             const allAnswers = [...positive, ...neutral, ...negative];
-
-            // DOM
-            const answerElement = document.getElementById('answer-text');
-            const portalStatus = document.getElementById('portalStatus');
-            const counterSpan = document.getElementById('counterDisplay');
-            const counterLabel = document.getElementById('counterLabel');
-            const mirrorFrame = document.getElementById('mirrorFrame');
-            const imgClosed = document.querySelector('.eyes-closed');
-            const imgOpen = document.querySelector('.eyes-open');
-            const imgGlasses = document.querySelector('.glasses');
 
             // Счётчик
             let revelationCount = 0;
@@ -434,18 +413,11 @@
             }
             updateCounter();
 
-            // Глаза
-            function setEyes(state) {
-                imgClosed.style.opacity = (state === 'closed') ? '1' : '0';
-                imgOpen.style.opacity = (state === 'open') ? '1' : '0';
-                imgGlasses.style.opacity = (state === 'glasses') ? '1' : '0';
-            }
-
-            // Звук
-            async function playBells() {
+            // Звук колокольчиков
+            function playBells() {
                 try {
                     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
                     const now = audioCtx.currentTime;
                     const notes = [1047, 1319, 1568, 2093];
                     notes.forEach((freq, i) => {
@@ -463,73 +435,92 @@
                 } catch (e) {}
             }
 
-            // Вращение
-            function startSpin() {
-                mirrorFrame.classList.add('spin');
+            // Управление глазами
+            function setEyes(state) {
+                if (closedEyes) closedEyes.style.opacity = (state === 'closed') ? '1' : '0';
+                if (openEyes) openEyes.style.opacity = (state === 'open') ? '1' : '0';
+                if (glasses) glasses.style.opacity = (state === 'glasses') ? '1' : '0';
             }
 
-            // Показ предсказания
-            function showProphecy(text, type) {
-                answerElement.textContent = text;
-                answerElement.className = '';
-                if (type === 'positive') answerElement.classList.add('positive');
-                else if (type === 'neutral') answerElement.classList.add('neutral');
-                else answerElement.classList.add('negative');
-                answerElement.classList.add('flash-answer');
-                setTimeout(() => answerElement.classList.remove('flash-answer'), 700);
-            }
+            // Определяем шаг ритуала
+            const oracleStep = localStorage.getItem('oracle_step');
 
-            // Ритуал (на localStorage)
-            const WISH_FLAG = 'tsarevna_wish_ready';
+            if (!oracleStep || oracleStep === 'start') {
+                // Шаг 1: первое касание – пробуждение через 3 секунды
+                setEyes('closed');
+                answerText.textContent = 'Приложи талисман, чтобы загадать';
+                answerText.className = '';
+                portalStatus.textContent = 'Царевна пробуждается...';
 
-            function runRitual() {
+                // Запоминаем, что ждём второе касание
+                localStorage.setItem('oracle_step', 'ready');
+
+                // Через 3 секунды открываем глаза
+                setTimeout(() => {
+                    setEyes('open');
+                    answerText.textContent = 'Загадывай желание';
+                    portalStatus.textContent = 'Царевна слушает...';
+                }, 3000);
+
+            } else if (oracleStep === 'ready') {
+                // Шаг 2: второе касание – магия
                 revelationCount++;
                 updateCounter();
+
                 const prophecy = allAnswers[Math.floor(Math.random() * allAnswers.length)];
                 let type = 'neutral';
                 if (positiveSet.has(prophecy)) type = 'positive';
                 else if (neutralSet.has(prophecy)) type = 'neutral';
                 else type = 'negative';
 
-                startSpin();
+                // Запуск вращения и звука
+                mirrorFrame.classList.add('spin');
                 playBells();
+                portalStatus.textContent = 'Царевна ищет ответ...';
+                answerText.textContent = '';
 
+                // Через 3 секунды показываем очки и ответ
                 setTimeout(() => {
                     setEyes('glasses');
-                    showProphecy(prophecy, type);
+                    answerText.textContent = prophecy;
+                    answerText.className = type;
+                    answerText.classList.add('flash-answer');
+                    setTimeout(() => answerText.classList.remove('flash-answer'), 700);
                     portalStatus.textContent = 'Пророчество явлено';
                     if (window.navigator && window.navigator.vibrate) {
                         window.navigator.vibrate(35);
                     }
                 }, 3000);
 
+                // Через 10 секунд после ответа возвращаем всё в начало
                 setTimeout(() => {
                     setEyes('closed');
-                    answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                    answerElement.className = '';
+                    answerText.textContent = 'Приложи талисман, чтобы загадать';
+                    answerText.className = '';
                     portalStatus.textContent = 'Царевна ждёт...';
                     mirrorFrame.classList.remove('spin');
-                    localStorage.removeItem(WISH_FLAG);
+                    localStorage.setItem('oracle_step', 'start');
                 }, 13000);
             }
 
-            // Определение шага
-            const wishReady = localStorage.getItem(WISH_FLAG);
-            if (wishReady === '1') {
-                localStorage.removeItem(WISH_FLAG);
-                runRitual();
-            } else {
-                localStorage.setItem(WISH_FLAG, '1');
-                setEyes('closed');
-                answerElement.innerHTML = 'Приложи талисман,<br>чтобы загадать';
-                portalStatus.textContent = 'Царевна пробуждается...';
-                setTimeout(() => {
-                    setEyes('open');
-                    answerElement.textContent = 'Загадывай желание';
-                    portalStatus.textContent = 'Царевна слушает...';
-                }, 3000);
+            // Генерация звёзд
+            function generateStars() {
+                const layer = document.getElementById('starsLayer');
+                for (let i = 0; i < 180; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    const size = Math.random() * 3.5 + 1;
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.animationDelay = Math.random() * 5 + 's';
+                    star.style.animationDuration = (Math.random() * 2.5 + 1.5) + 's';
+                    layer.appendChild(star);
+                }
             }
-        })();
+            generateStars();
+        });
     </script>
 </body>
 </html>
