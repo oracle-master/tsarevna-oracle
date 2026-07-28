@@ -3,7 +3,7 @@
         ЦАРЕВНА-ОРАКУЛ 2.0
         oracle.js
 
-        Версия: автопробуждение + NFC + fallback
+        Версия: автопробуждение + NFC + автоповтор
 
 =====================================
 */
@@ -45,7 +45,11 @@ async function startNFCListening(){
             setStatus("Талисман не услышан...");
         };
     }catch(error){
-        setStatus("Коснись экрана, чтобы пробудить Царевну");
+        setStatus("Царевна дремлет");
+        // Автоматически пробуем запустить NFC ещё раз
+        setTimeout(() => {
+            startNFCListening();
+        }, 1000);
         console.log(error);
     }
 }
